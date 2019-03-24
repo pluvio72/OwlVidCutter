@@ -1,1 +1,1 @@
-Automatically cuts OWL videos given the name of the match
+Machine learning project that automatically detects Ad sections and cuts them out

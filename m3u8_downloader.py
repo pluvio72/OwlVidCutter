@@ -50,5 +50,8 @@ class M3U8:
 
 	def download(self):
 		print("Downloading...")
+		current_percent=0
+		total_percent=len(self.m3u8_body)
 		for url in self.m3u8_body:
+			print(f"Current Percent Downloaded: {current_percent/total_percent}%")
 			self.download_url(url)
