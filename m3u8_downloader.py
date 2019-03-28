@@ -40,7 +40,7 @@ class M3U8:
 	def download_url(self, url):
 		req = urllib.request.urlopen(url)
 		resp = req.read()
-		binfile = open('video.ts', 'ab')
+		binfile = open('/videos/video.ts', 'ab')
 		binfile.write(resp)
 		binfile.close()
 #		with req as = open('video.ts', 'ab') as f:
@@ -53,5 +53,6 @@ class M3U8:
 		current_percent=0
 		total_percent=len(self.m3u8_body)
 		for url in self.m3u8_body:
-			print(f"Current Percent Downloaded: {current_percent/total_percent}%")
-			self.download_url(url)
+                        print(f"Current Percent Downloaded: {current_percent/total_percent}%")
+                        thr = threading.Thread(target=self.download_url, args=(url,)).start()
+#			self.download_url(url)

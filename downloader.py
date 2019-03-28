@@ -1,4 +1,3 @@
-from bs4 import BeautifulSoup as soup
 from urllib.parse import urlparse
 import subprocess
 import requests
@@ -8,7 +7,7 @@ import json
 import os
 import re
 
-URL = "https://overwatchleague.com/en-gb/videos?v=XVrFmBDW2pP"
+URL = "https://overwatchleague.com/en-gb/videos"
 
 headers = {
     'authority': "overwatchleague.com",
@@ -25,27 +24,46 @@ headers = {
 }
 
 req = requests.get(URL, headers=headers)
+video_tags = re.compile('class="Card-link(.*?)"(.*?)data-mlg-embed="(.*?)"')
+#get video url 
+top_video_urls = re.findall(video_tags, req.text)
 
-variable = re.compile('data-mlg-embed="(.*?)"')
-url = variable.search(req.text).group(1)
-url.replace("https", 'http')
+#look over each video and get the title to choose from
+data_title = re.compile('data-title="(.*?)"')
+videos = []
+for link in top_video_urls:
+    title_search = re.search(data_title, link[1].strip())
+    title = title_search.group(1).strip()
+    
+    #there are preview's interviews etc. jut want full matches
+    if "Full Match" in title:
+        url = link[-1]
+        split_title = title.split("|")
+        videos.append((split_title[len(split_title)-1], url))
 
-req = requests.get(url)
+current_video=1
+for video in videos:
+    print(f"Video {current_video}: {video[0]}")
+    current_video+=1
+
+chosen_video = int(input("Choose a video: "))
+chosen_video_url = videos[chosen_video-1][1]
+print(f"[INFO] Chosen Video: {videos[chosen_video-1][0]}")
+
+#find m3u8 variable in javascript streamUrl: https://something.m3u8
+req = requests.get(chosen_video_url)
 variable = re.compile('streamUrl":"(.*?)(.m3u8)')
 url = variable.search(req.text).group(1) + variable.search(req.text).group(2)
+
 #parse url to get basepath for once i get the m3u8 url as it only has relative path
 parsed_url = urlparse(url)
 file_path = parsed_url.path
 basepath = 'http://' + parsed_url.netloc + file_path.split(os.path.basename(file_path))[0]
 #add http: beacuse the url is //m3u8urlhere
 general_m3u8 = 'http:' + url
-print("General URL: " + general_m3u8)
+print("[INFO] Top-Level M3U8 URL: " + general_m3u8)
 
-#variable = re.compile('URI="(.*?)"')
-#req = requests.get(general_m3u8)
-#search_result = re.search(variable, req.text)
-#m3u8_playlist_url = basepath + search_result.group(1)
-
+print("[INFO] Downloading Video...")
 downloader = m3u8_downloader.M3U8(general_m3u8)
 downloader.choose_playlist(0)
 downloader.get_m3u8_body()
