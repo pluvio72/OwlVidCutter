@@ -64,7 +64,7 @@ general_m3u8 = 'http:' + url
 print("[INFO] Top-Level M3U8 URL: " + general_m3u8)
 
 print("[INFO] Downloading Video...")
-downloader = m3u8_downloader.M3U8(general_m3u8)
+downloader = m3u8_downloader.M3U8(general_m3u8, videos[chosen_video-1][0])
 downloader.choose_playlist(0)
 downloader.get_m3u8_body()
 downloader.download()

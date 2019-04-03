@@ -10,12 +10,12 @@ import numpy as np
 import cv2
 import os
 
-EPOCHS = 20
+EPOCHS = 50
 INIT_LR = 1e-3
 BS = 32
 
 ASPECT_RATIO = 1080/1920
-MAX_IMAGES = 500
+MAX_IMAGES = 700
 input_shape = (128,int(128*ASPECT_RATIO),1)
 
 ad_directory = os.path.join(os.getcwd(), 'images/ad')
@@ -36,7 +36,7 @@ random_permutation = np.random.permutation(len(all_image_data))
 #Turn images and labels into a numpy array and randomise the indexes
 x,y = (np.array(all_image_data, dtype='float')/255)[random_permutation], np.array(all_labels)[random_permutation]
 
-x_train, x_test, y_train, y_test = train_test_split(x,y, test_size=0.33, random_state=42)
+x_train, x_test, y_train, y_test = train_test_split(x,y, test_size=0.27, random_state=37)
 
 #Reshape array into [input_shape e.g. (num of iamges,100,100,1)
 x_train = np.reshape(x_train, (x_train.shape[0], input_shape[0], input_shape[1], input_shape[2]))
@@ -48,7 +48,9 @@ x_test = np.reshape(x_test, (x_test.shape[0], input_shape[0], input_shape[1], 1)
 #y_train = to_categorical(y_train)
 #y_test = to_categorical(y_test)
 
-aug = ImageDataGenerator(rotation_range=0, width_shift_range=0.1, height_shift_range=0.1, shear_range=0.2, zoom_range=0.2, horizontal_flip=True, fill_mode='nearest')
+aug = ImageDataGenerator(rotation_range=0, width_shift_range=0.1, 
+        height_shift_range=0.1, shear_range=0.2, zoom_range=0.2, 
+        horizontal_flip=True, fill_mode='nearest')
 
 model = SmallerVGGNet.build(width=input_shape[0], height=input_shape[1], 
         depth=input_shape[2], classes=2)
