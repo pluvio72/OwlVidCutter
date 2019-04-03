@@ -67,5 +67,6 @@ class M3U8:
 
                 for url in self.m3u8_body:
                         print(f"Current Percent Downloaded: {current_percent/total_percent}%")
-                        threading.Thread(target=self.download_url, args=(url,)).run()
+                        #threading.Thread(target=self.download_url, args=(url,)).run()
+                        self.download_url(url)
                         current_percent+=1
