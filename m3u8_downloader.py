@@ -1,5 +1,4 @@
 from multiprocessing.dummy import Pool as ThreadPool
-from multiprocessing import Process, Pool
 from urllib.parse import urlparse
 import subprocess
 import requests
@@ -16,6 +15,7 @@ class M3U8:
     URI_REGEX = 'URI="(.*?)"'
     NUM_THREAD = 1000
 
+    # Init function initializes all variables
     def __init__(self, m3u8_playlist_page,video_name):
             self.playlist_page = m3u8_playlist_page
             self.m3u8_url = ''
@@ -25,54 +25,68 @@ class M3U8:
             parsed_playlist_path = os.path.basename(urlparse(m3u8_playlist_page).path)
             self.basepath = m3u8_playlist_page.split(parsed_playlist_path)[0]
     
+    # Function which chooses the playlist e.g. the quality of the stream and saves the URL into self.m3u8_url
     def choose_playlist(self, index):
             req = requests.get(self.playlist_page)
             split_response = req.text.split('\n')
             m3u8_lines = []
-            #split the m3u8 of any unecessary tags
+            # Split the m3u8 of any unecessary tags
             for line in split_response:
                     if self.M3U8_TAG in line:
                             m3u8_lines.append(line.split(self.M3U8_TAG)[1])
-            #sort the m3u8 playlists in orser of resolution 
+            # Sort the m3u8 playlists in orser of resolution 
             m3u8_lines = sorted(m3u8_lines, key=lambda x: int(re.search(re.compile(self.RES_REGEX), x).group(1)), reverse=True)
             print(f"[INFO] You have chosen the stream with resolution: {re.search(re.compile(self.RES_REGEX),m3u8_lines[index]).group(0)}")
             print(f"[INFO] The URL is: {re.search(re.compile(self.URI_REGEX),m3u8_lines[index]).group(1)}")
             print(f"[INFO] The Video Title is: {m3u8_lines[index]}")
-            #select the m3u8 playlist and extract the url from the line
+            # Select the m3u8 playlist and extract the url from the line
             self.m3u8_url = self.basepath+re.search(re.compile(self.URI_REGEX), m3u8_lines[index]).group(1)
 
+    # Function which geoes through the chosen URL and saves the mp4 file URL's in the variable self.m3u8_body
     def get_m3u8_body(self):
-	    url_identifier = os.path.basename(self.m3u8_url).split('.')[0]
-	    req = requests.get(self.m3u8_url)
-	    regex = url_identifier + '.*?.ts'
-	    results = re.findall(re.compile(regex), req.text)
-	    results = [self.basepath + x for x in results]
-	    self.m3u8_body = results
-
-    def write_playlist_to_file(self):
-        with open('links.txt', 'w') as f:
-            for link in self.m3u8_body:
-                f.write(link+'\n')
-
-    def first_download_url(self, url):
-        print("[INFO] Downloading first chunk...")
-        req = requests.get(url)
-        binfile = open(f'./videos/{self.video_name}.ts', 'wb')
-        binfile.write(req.content)
-        binfile.close()
-
-    def download_url(self, url):
+            url_identifier = os.path.basename(self.m3u8_url).split('.')[0]
+            req = requests.get(self.m3u8_url)
+            regex = url_identifier + '.*?.ts'
+            results = re.findall(re.compile(regex), req.text)
+            # Skip every 2 because there are two urls per video section
+            results = [self.basepath + x for x in results][::2]
+            self.m3u8_body = results
+            print(f'[INFO] Number of .ts files: {len(results)}')
+    
+    # Function which downloads a video from given URL and outputs the current % downloaded
+    def download_url(self, url, index):
             print('[INFO] Current Download Percentage: {}'.format((self.download_percentage/len(self.m3u8_body))*100))
             self.download_percentage += 1
             data = urllib.request.urlopen(url).read()
-            with open(f'./videos/{self.video_name}.ts', 'ab') as f:
+            with open(f'./tmp_videos/{index}.ts', 'wb') as f:
                 f.write(data)
-
+    
+    # Main Download function which initiates a pool of workers to download the ts stream by multiprocessing
     def download(self):
-            print("[INFO] Downloading...")
-            self.first_download_url(self.m3u8_body[0])
-
-            pool = ThreadPool(10)
-            results = pool.map(self.download_url, self.m3u8_body)
+            print("[STATUS] Downloading...")
+            pool = ThreadPool(14)
+            # Using starmap as it accepts a tuple for the function arguments
+            results = pool.starmap(self.download_url, zip(self.m3u8_body, range(len(self.m3u8_body))))
             pool.close()
             pool.join()
+            self.cleanup_writefile()
+
+    # Cleanup tmp folder and turn into one video
+    def cleanup_writefile(self):
+            pattern = re.compile('([0-9]*?).ts')
+            files = [x for x in os.listdir('./tmp_videos/') if 'DS_Store' not in x]
+            # Sort list of files into the video number
+            files = sorted(files, key=lambda x: int(re.search(pattern, x).group(1)))
+            files = [os.path.join(os.getcwd(), 'tmp_videos', x) for x in files]
+            
+            previous_data = b''
+            with open(f'./videos/{self.video_name}.ts', 'wb') as video_file:
+                for f in files:
+                    with open(f, 'rb') as sub_file:
+                        data = sub_file.read()
+                        if data != previous_data:
+                            video_file.write(data)
+                        previous_data = data
+                    os.remove(f)
+                 
+

@@ -82,5 +82,5 @@ for x in images:
 #################################################################
 #### COMMENT MY CODE SO I CAN UNDERSTAND IT LATER ###############
 #################################################################
-# ALSO MAKE FASTER WAY TO DO THE IMAGE CUTTING PART #############
+#### ALSO MAKE FASTER WAY TO DO THE IMAGE CUTTING PART ##########
 #################################################################
