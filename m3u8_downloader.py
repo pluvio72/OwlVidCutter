@@ -2,6 +2,7 @@ from multiprocessing.dummy import Pool as ThreadPool
 from urllib.parse import urlparse
 import subprocess
 import requests
+import pyprind
 import urllib
 import os
 import re
@@ -21,6 +22,7 @@ class M3U8:
             self.m3u8_url = ''
             self.m3u8_body = ''
             self.video_name = video_name
+            self.progress_bar = None
             self.download_percentage = 0
             parsed_playlist_path = os.path.basename(urlparse(m3u8_playlist_page).path)
             self.basepath = m3u8_playlist_page.split(parsed_playlist_path)[0]
@@ -51,12 +53,13 @@ class M3U8:
             # Skip every 2 because there are two urls per video section
             results = [self.basepath + x for x in results][::2]
             self.m3u8_body = results
+            self.progress_bar = pyprind.ProgBar(len(results))
             print(f'[INFO] Number of .ts files: {len(results)}')
     
     # Function which downloads a video from given URL and outputs the current % downloaded
     def download_url(self, url, index):
-            print('[INFO] Current Download Percentage: {}'.format((self.download_percentage/len(self.m3u8_body))*100))
             self.download_percentage += 1
+            self.progress_bar.update()
             data = urllib.request.urlopen(url).read()
             with open(f'./tmp_videos/{index}.ts', 'wb') as f:
                 f.write(data)
@@ -69,6 +72,7 @@ class M3U8:
             results = pool.starmap(self.download_url, zip(self.m3u8_body, range(len(self.m3u8_body))))
             pool.close()
             pool.join()
+            print('[STATUS] Joining files into single video')
             self.cleanup_writefile()
 
     # Cleanup tmp folder and turn into one video
