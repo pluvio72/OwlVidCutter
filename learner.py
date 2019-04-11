@@ -15,7 +15,7 @@ INIT_LR = 1e-3
 BS = 32
 
 ASPECT_RATIO = 1080/1920
-MAX_IMAGES = 700
+MAX_IMAGES = 1000
 input_shape = (128,int(128*ASPECT_RATIO),1)
 
 ad_directory = os.path.join(os.getcwd(), 'images/ad')

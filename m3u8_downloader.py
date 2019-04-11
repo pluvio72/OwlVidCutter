@@ -84,13 +84,11 @@ class M3U8:
             files = [os.path.join(os.getcwd(), 'tmp_videos', x) for x in files]
             
             previous_data = b''
-            with open(f'./videos/{self.video_name}.ts', 'wb') as video_file:
+            with open(f'./videos/{self.video_name.strip()}.ts', 'wb') as video_file:
                 for f in files:
                     with open(f, 'rb') as sub_file:
                         data = sub_file.read()
                         if data != previous_data:
                             video_file.write(data)
                         previous_data = data
-                    os.remove(f)
-                 
-
+                    os.remove(f) 

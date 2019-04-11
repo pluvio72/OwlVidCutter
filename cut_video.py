@@ -55,8 +55,8 @@ if get_images:
     image_cut_count = int(total_frame_count/every_second)
     print(f'[STATUS] Cutting {image_cut_count} Images')
     for image in range(image_cut_count):
-        print(f'\r{image_cut_count-image} Images Left', end='')
-        video_f.save_frame(f'images/{image_extra_path}/{os.path.basename(filename)[0:3]}{random.randrange(1,1000000)}.jpg', t=image*every_second)
+        print(f'\r [STATUS] {image_cut_count-image} Images Left', end='')
+        video_f.save_frame(f'images/{image_extra_path}/{os.path.basename(filename.strip())[0:3]}{random.randrange(1,1000000)}.jpg', t=image*every_second)
 
    # print("[INFO] Cutting Images...")
    # vidcap = cv2.VideoCapture(new_video_path)
