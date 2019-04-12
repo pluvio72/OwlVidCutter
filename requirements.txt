@@ -1,0 +1,9 @@
+requests==2.21.0
+numpy==1.16.2
+PyPrind==2.11.2
+moviepy==1.0.0
+opencv_python==4.0.0.21
+matplotlib==3.0.3
+Keras==2.2.4
+Pillow==6.0.0
+scikit_learn==0.20.3
