@@ -6,7 +6,7 @@
    - Run `pip install -r requirements.txt` in the root folder
    - Run `python scripts/setup_folders.py` to create the project structure
 
-####Scripts:
+#### Scripts:
    - **Classify:** used to check whether the model is trained correctly for the images being used
      - arguments: -i (path to image) 
 		  -m (path to model)
