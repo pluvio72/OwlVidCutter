@@ -1,4 +1,4 @@
-# Machine learning app that automatically detects Ads and cuts them out
+# Machine learning app that cuts ads from a video
 
 ##### Has a threaded M3U8 playlist streamer which you can pick out which quality stream used. Scripts to generate images from downloaded videos and classify them, and a script which takes a video as a video as input and cuts out all the ads.
 
