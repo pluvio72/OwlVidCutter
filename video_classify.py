@@ -2,11 +2,13 @@ from moviepy.video.io.VideoFileClip import VideoFileClip
 from multiprocessing.dummy import Pool as ThreadPool
 from PIL import Image, ImageFont, ImageDraw
 from keras.models import load_model
+from constants import VIDEO_EXT
 import matplotlib.pyplot as plt
 import numpy as np
 import subprocess
 import threading
 import argparse
+import time
 import cv2
 import os
 import re
@@ -59,6 +61,7 @@ images = sorted(images, key=lambda x: int(re.search(pattern, x).group(1)))
 images = [os.path.join(tmp_dir, x) for x in images]
 
 print(f'[INFO] {len(images)} Images')
+
 # Preprocess image data
 for image in images:
     img = cv2.imread(image, 0)
@@ -66,6 +69,7 @@ for image in images:
     d = np.array(img)
     image_data.append(d)
 
+print('[STATUS] Making predictions on where to cut video')
 
 # Turn image data into numpy array
 image_data = np.array(image_data) / 255.0
@@ -87,6 +91,7 @@ count = 0
 ad_count = 0
 
 print('[STATUS] Sorting out where to cut video')
+
 current_item = []
 for x in range(len(images)):
     label = int(np.argmax(predictions[x]))
@@ -113,8 +118,8 @@ for x in range(len(images)):
 cut_videos = []
 def cut_video_part(start_time, end_time, filename, output_filename):
     subprocess.call(['ffmpeg', '-ss', f'{start_time}', '-i', f'{filename}', '-to', f'{end_time}', 
-        '-c', 'copy', f'videos/final_videos/{output_filename}.ts', '-f', 'ts','-loglevel', 'panic'])
-    cut_videos.append(f'{output_filename}.ts')
+        '-c', 'copy', f'videos/final_videos/{output_filename}{VIDEO_EXT}', '-f', 'ts','-loglevel', 'panic'])
+    cut_videos.append(f'{output_filename}{VIDEO_EXT}')
 
 
 #for x in cut_times:
@@ -126,8 +131,9 @@ def cut_video_part(start_time, end_time, filename, output_filename):
 #    plt.imshow(img)
 #    plt.show()
 
+print('[STATUS] Cutting video')
+
 # Cut the video
-print('[STATUS] Cutting videos')
 start_time = 0
 end_time = 0
 for x in range(len(cut_times)):
@@ -136,22 +142,26 @@ for x in range(len(cut_times)):
     cut_video_part(start_time, int(end_time-start_time), args['video'], str(x)) 
      
 print('[STATUS] Combining vut videos')
+
 final_videos = []
-pattern = re.compile('([0-9]*?).ts')
+pattern = re.compile(f'([0-9]*?){VIDEO_EXT}')
 cut_videos = sorted(cut_videos, key=lambda x: int(re.search(pattern, x).group(1)))
 cut_videos = [os.path.join(os.getcwd(), 'videos', 'final_videos', x) for x in cut_videos]
 
-'''
-DECIDE WHETHER I WANT TO USE TS OR MP4 FILES AND SET CONSTANT
-'''
+input_filename = str(int(time.time())) + '.txt'
+with open(input_filename, 'w') as f:
+    for vid in cut_videos:
+        f.write(f'file \'videos/final_videos/{os.path.basename(vid)}\'\n')
 
-with open(f'videos/final_videos/{os.path.basename(args["video"])}', 'wb') as main_file:
-    for video in cut_videos:
-        with open(video, 'rb') as sub_file:
-            #main_file.seek(os.SEEK_SET, os.SEEK_END)
-            data = sub_file.read()
-            main_file.write(data)
-        #os.remove(video)
+subprocess.call(['ffmpeg', '-f', 'concat', '-i', f'{input_filename}', '-c', 'copy', '-y', '-loglevel', 'panic',
+    f'videos/final_videos/{os.path.basename(args["video"])[:-3]}{VIDEO_EXT}'])
+
+
+for vid in cut_videos:
+    os.remove(vid)
+for x in images:
+    os.remove(x)
+os.remove(input_filename)
 
 print('[STATUS] Complete')    
 
@@ -166,5 +176,3 @@ print('[STATUS] Complete')
 #    plt.imshow(img)
 #    plt.show()
 
-for x in images:
-    os.remove(x)

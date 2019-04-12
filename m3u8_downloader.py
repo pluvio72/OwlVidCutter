@@ -61,7 +61,7 @@ class M3U8:
             self.download_percentage += 1
             self.progress_bar.update()
             data = urllib.request.urlopen(url).read()
-            with open(f'./tmp_videos/{index}.ts', 'wb') as f:
+            with open(f'./tmp/{index}.ts', 'wb') as f:
                 f.write(data)
     
     # Main Download function which initiates a pool of workers to download the ts stream by multiprocessing
@@ -78,7 +78,7 @@ class M3U8:
     # Cleanup tmp folder and turn into one video
     def cleanup_writefile(self):
             pattern = re.compile('([0-9]*?).ts')
-            files = [x for x in os.listdir('./tmp_videos/') if 'DS_Store' not in x]
+            files = [x for x in os.listdir('./tmp/') if 'DS_Store' not in x]
             # Sort list of files into the video number
             files = sorted(files, key=lambda x: int(re.search(pattern, x).group(1)))
             files = [os.path.join(os.getcwd(), 'tmp_videos', x) for x in files]
